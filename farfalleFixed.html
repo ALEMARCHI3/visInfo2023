@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Farfalle multivariate</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+  position: fixed;
+  
+  background-image: url("https://static.vecteezy.com/ti/vettori-gratis/p1/2209345-carino-nuvole-pattern-su-sfondo-blu-gratuito-vettoriale.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+    .wing {
+      stroke-width: 2;
+    }
+
+    .head {
+      fill: #000000;
+    }
+
+    .abdomen {
+      fill: #000000;
+    }
+  </style>
+</head>
+<body>
+ 
+  <script>
+var larghezzaSchermo = window.innerWidth/1.2;
+var altezzaSchermo = window.innerHeight/1.2;
+var margin = {top: 10, right: 40, bottom: 60, left: 70};
+var width = larghezzaSchermo - margin.left - margin.right;
+var height = altezzaSchermo - margin.top - margin.bottom;
+
+var svg = d3.select('body')
+      .append("svg")
+      .attr("width", larghezzaSchermo)
+      .attr("height", altezzaSchermo)
+      .append("g")
+        .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+var data;     
+   d3.json("https://raw.githubusercontent.com/ALEMARCHI3/visInfo2023/main/valori.json")
+      .then(function(datajson) {
+      	data=datajson;
+        var min_val = d3.min(data, function(d) {
+     		 return d3.min([d.var1, d.var2, d.var3, d.var4, d.var5]);
+    	  });
+    	  var max_val = d3.max(data, function(d) {
+     		   return d3.max([d.var1, d.var2, d.var3, d.var4, d.var5]);
+    	  }); 
+    	//colors
+    	var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#0080ff'];
+    	// Definizione delle scale
+    	var xScale = d3.scaleLinear()
+   		 .domain([min_val-2,max_val+2])
+    	 .range([0, width]);
+
+  		var yScale = d3.scaleLinear()
+   		 .domain([min_val-2,max_val+2])
+   		 .range([0, height]);
+   		//creazione delle farfalle
+   		var butterflies = svg.selectAll('.butterfly')
+      		.data(data)
+      		.enter()
+      		.append('g')
+      		.attr('class', 'butterfly')
+      		.attr('transform', function(d, i) {
+       			var x = xScale(d.var1);
+        		var y = yScale(d.var2);
+        		return 'translate(' + x + ',' + y + ')';
+     		 });
+
+
+      var minRadiusWing = 35; // Raggio minimo del cerchio
+      var maxRadiusWing = 60; // Raggio massimo del cerchio
+      var radiusScaleWing = d3.scaleLinear()
+          .domain([min_val, max_val]) // Intervallo di input
+          .range([minRadiusWing, maxRadiusWing]); // Intervallo di output
+      	//costruzione ala sinistra
+	    butterflies.append('path')
+	      .attr('class', 'wingLeft')
+	      .attr('d', function(d) {
+	          var wingWidthLeft = radiusScaleWing(d.var3); // Imposta la larghezza dell'ala
+	          var wingHeightLeft = 40; // Imposta l'altezza dell'ala
+	          var wingPathLeft = 'M0,0 C10,-30 ' + (wingWidthLeft - 5) + ',-25 ' + (wingWidthLeft - 15) + ',-15 C' + (wingWidthLeft - 10) + ',-5 10,20 0,0';
+	          return wingPathLeft;
+	          })
+	      .attr('transform', 'scale(-1,1)')
+	      .style('fill', function(d, i) {
+	        return colors[i % colors.length]; // Assegna un colore diverso a ciascuna farfalla
+	      });
+	    //costruzione ala destra
+ 		butterflies.append('path')
+    	  .attr('class', 'wingRight')
+    	  .attr('d', function(d) {
+         	 var wingWidthRight = radiusScaleWing(d.var3); // Imposta la larghezza dell'ala
+          	var wingHeightRight = 40; // Imposta l'altezza dell'ala
+          	var wingPathRight = 'M0,0 C10,-30 ' + (wingWidthRight - 5) + ',-25 ' + (wingWidthRight - 15) + ',-15 C' + (wingWidthRight - 10) + ',-5 10,20 0,0';
+          	return wingPathRight;
+     	 })
+      		.style('fill', function(d, i) {
+        		return colors[i % colors.length]; // Assegna un colore diverso a ciascuna farfalla
+     		});
+
+
+      var minRadiusHead = 3; // Raggio minimo del cerchio
+      var maxRadiusHead = 7; // Raggio massimo del cerchio
+      var radiusScaleHead = d3.scaleLinear()
+          .domain([min_val, max_val]) // Intervallo di input
+          .range([minRadiusHead, maxRadiusHead]); // Intervallo di output
+     	//costruzione della testa
+     	butterflies.append('circle')
+      		.attr('class', 'head')
+     		  .attr('cx', 0)
+      		.attr('cy', -15)
+      		.attr('r', function(d) {
+        		return radiusScaleHead(d.var4);
+      		})
+      		.style('fill', '#000000'); // Colore fisso del corpo delle farfalle
+      	//creazione del corpo
+
+
+      var minRadiusBody = 5; // Raggio minimo del cerchio
+      var maxRadiusBody = 13; // Raggio massimo del cerchio
+      var radiusScaleBody = d3.scaleLinear()
+          .domain([min_val, max_val]) // Intervallo di input
+          .range([minRadiusBody, maxRadiusBody]); // Intervallo di output
+
+    	butterflies.append('ellipse')
+    	  .attr('class', 'abdomen')
+     	  .attr('cx', 0)
+      	.attr('cy', 10)
+     	  .attr('rx', function(d) {
+     		   return radiusScaleBody(d.var5)/2;
+    	  })
+      	  .attr('ry', function(d) {
+        		return radiusScaleBody(d.var5);
+     	  })
+      	  .style('fill', '#000000'); // Colore fisso del corpo delle farfalle
+      	
+   		var isRKeyPressed = false;
+   		document.onkeydown = function (e) {
+  		if(e.key==='r'){isRKeyPressed=true}
+		};
+		document.onkeyup = function (e) {
+  			isRKeyPressed=false;
+		};
+
+	  	//spostamento della farfalla	
+	  	butterflies.on('click', function(d) {
+      if(!isRKeyPressed){   //shift avanti
+
+        for (var i = 0; i < data.length; i++) {
+          var element = data[i];
+          var keys = Object.keys(element);
+          var firstValue = element[keys[0]];
+
+          for (var j = 0; j < keys.length - 1; j++) {
+            element[keys[j]] = element[keys[j + 1]];
+          }
+          element[keys[keys.length - 1]] = firstValue;
+        } 
+      }
+      else{
+        for (var i = 0; i < data.length; i++) {
+          var element = data[i];
+          var keys = Object.keys(element);
+          var lastValue = element[keys[keys.length - 1]];
+
+          for (var j = keys.length - 1; j > 0; j--) {
+            element[keys[j]] = element[keys[j - 1]];
+          }
+
+          element[keys[0]] = lastValue;
+        }   
+
+    }
+
+    svg.selectAll('.butterfly')
+          .transition()
+          .duration(750)
+          .select('circle')
+            .attr('r', function(d) {
+              return radiusScaleHead(d.var4);
+            });
+
+        svg.selectAll('.butterfly')
+          .transition()
+          .duration(750)
+          .select('ellipse')
+            .attr('rx', function(d) {
+              return radiusScaleBody(d.var5)/2;
+            })
+            .attr('ry', function(d) {
+              return radiusScaleBody(d.var5);
+            });
+
+        svg.selectAll('.butterfly')
+          .transition()
+          .duration(750)
+          .select("path.wingLeft")
+            .attr('d', function(d) {
+              var wingWidthLeft = radiusScaleWing(d.var3); // Imposta la larghezza dell'ala
+              var wingHeightLeft = 40; // Imposta l'altezza dell'ala
+              var wingPathLeft = 'M0,0 C10,-30 ' + (wingWidthLeft - 5) + ',-25 ' + (wingWidthLeft - 15) + ',-15 C' + (wingWidthLeft - 10) + ',-5 10,20 0,0';
+                return wingPathLeft;
+            });
+
+        svg.selectAll('.butterfly')
+          .transition()
+          .duration(750)
+          .select("path.wingRight")
+            .attr('d', function(d) {
+              var wingWidthRight = radiusScaleWing(d.var3); // Imposta la larghezza dell'ala
+              var wingHeightRight = 40; // Imposta l'altezza dell'ala
+              var wingPathRight = 'M0,0 C10,-30 ' + (wingWidthRight - 5) + ',-25 ' + (wingWidthRight - 15) + ',-15 C' + (wingWidthRight - 10) + ',-5 10,20 0,0';
+              return wingPathRight;
+            });
+
+
+        svg.selectAll('.butterfly')
+          .transition()
+          .duration(750)
+          .attr('transform', function(d, i) {
+              var x = xScale(d.var1);
+              var y = yScale(d.var2);
+              return 'translate(' + x + ',' + y + ')';
+          });
+  
+		});
+
+      })
+
+    
+  
+  </script>
+</body>
+</html>
